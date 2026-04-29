@@ -210,6 +210,11 @@ export default function PredictPage() {
   };
 
   useEffect(() => {
+    const CACHE_KEY = "gtuai_subjects_cache";
+    const cached = localStorage.getItem(CACHE_KEY);
+    if (cached) {
+      try { setSubjects(JSON.parse(cached)); } catch { /* ignore */ }
+    }
     async function load() {
       const supabase = createClient();
       const { data: { user } } = await supabase.auth.getUser();
@@ -218,7 +223,9 @@ export default function PredictPage() {
       let url = "/subjects";
       if (profile?.branch) url += `?branch=${encodeURIComponent(profile.branch)}`;
       const data = await api.get(url).catch(() => []);
-      setSubjects(Array.isArray(data) ? data : []);
+      const subjects = Array.isArray(data) ? data : [];
+      setSubjects(subjects);
+      if (subjects.length) localStorage.setItem(CACHE_KEY, JSON.stringify(subjects));
     }
     load();
   }, []);
