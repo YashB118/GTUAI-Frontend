@@ -4,8 +4,8 @@
   "outputDirectory": ".next",
   "regions": ["bom1"],
   "env": {
-    "NEXT_PUBLIC_SUPABASE_URL": "@supabase_url",
-    "NEXT_PUBLIC_SUPABASE_ANON_KEY": "@supabase_anon_key",
-    "NEXT_PUBLIC_BACKEND_URL": "@backend_url"
+    "NEXT_PUBLIC_SUPABASE_URL": "https://opkfzdgopijxfosnozsv.supabase.co",
+    "NEXT_PUBLIC_SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9wa2Z6ZGdvcGlqeGZvc25venN2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzczMDc1MTgsImV4cCI6MjA5Mjg4MzUxOH0.Koy_GVboLYFHQt7gqslrhCpWOqQeVrYU861p4-YUGkQ",
+    "NEXT_PUBLIC_BACKEND_URL": "https://gtuai-backend.onrender.com"
   }
 }
