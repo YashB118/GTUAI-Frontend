@@ -1,100 +1,147 @@
-import Image from "next/image";
+import { redirect } from "next/navigation";
+import Link from "next/link";
+import { createClient } from "@/lib/supabase/server";
+import { Sparkles, BookOpen, MessageSquare, ArrowRight, Brain, TrendingUp, Users } from "lucide-react";
 
-export default function Home() {
+export default async function RootPage() {
+  const supabase = createClient();
+  const { data: { session } } = await supabase.auth.getSession();
+
+  if (session) {
+    const role = session.user.user_metadata?.role || "student";
+    redirect(role === "admin" ? "/admin/dashboard" : "/dashboard");
+  }
+
   return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="https://nextjs.org/icons/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-semibold">
-              app/page.tsx
-            </code>
-            .
-          </li>
-          <li>Save and see your changes instantly.</li>
-        </ol>
-
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="https://nextjs.org/icons/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:min-w-44"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+    <div className="min-h-screen bg-bg-primary text-text-primary">
+      {/* Nav */}
+      <header className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-6 py-4 border-b border-border/50 bg-bg-primary/80 backdrop-blur-sm">
+        <div className="flex items-center gap-2 font-bold text-lg">
+          <Brain className="text-accent" size={22} />
+          GTU ExamAI
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-6 flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
+        <div className="flex items-center gap-3">
+          <Link href="/login" className="text-sm text-text-secondary hover:text-text-primary transition-colors">
+            Sign in
+          </Link>
+          <Link
+            href="/register"
+            className="text-sm px-4 py-2 rounded-lg bg-accent text-white font-medium hover:bg-accent/90 transition-colors"
+          >
+            Get started
+          </Link>
+        </div>
+      </header>
+
+      {/* Hero */}
+      <section className="pt-32 pb-20 px-6 text-center">
+        <div className="max-w-3xl mx-auto">
+          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-accent/30 bg-accent/5 text-accent text-xs font-medium mb-8">
+            <Sparkles size={12} />
+            AI-powered exam predictions for GTU
+          </div>
+          <h1 className="text-5xl md:text-6xl font-extrabold tracking-tight mb-6 leading-tight">
+            Stop Guessing.
+            <br />
+            <span className="text-accent">Start Predicting.</span>
+          </h1>
+          <p className="text-lg text-text-secondary mb-10 max-w-xl mx-auto">
+            GTU&apos;s first AI platform that analyzes 5 years of past papers to predict which questions are most likely to appear in your next exam.
+          </p>
+          <div className="flex flex-col sm:flex-row gap-3 justify-center">
+            <Link
+              href="/register"
+              className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-lg bg-accent text-white font-semibold hover:bg-accent/90 transition-colors"
+            >
+              Get Started Free
+              <ArrowRight size={16} />
+            </Link>
+            <Link
+              href="/login"
+              className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-lg border border-border text-text-primary font-semibold hover:bg-bg-card transition-colors"
+            >
+              Sign In
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      {/* Features */}
+      <section className="py-16 px-6">
+        <div className="max-w-5xl mx-auto">
+          <h2 className="text-2xl font-bold text-center mb-12">Everything you need to ace GTU exams</h2>
+          <div className="grid md:grid-cols-3 gap-6">
+            {[
+              {
+                icon: TrendingUp,
+                title: "AI Predictions",
+                desc: "Weighted scoring across frequency, recency, marks and unit distribution — ranked by probability.",
+              },
+              {
+                icon: BookOpen,
+                title: "Study Materials Hub",
+                desc: "Student-uploaded notes, textbooks, and slides — all peer-reviewed and organized by subject.",
+              },
+              {
+                icon: MessageSquare,
+                title: "Instant Answers",
+                desc: "Ask any GTU question and get a structured, marks-aware answer generated from your subject materials.",
+              },
+            ].map(({ icon: Icon, title, desc }) => (
+              <div key={title} className="rounded-xl border border-border bg-bg-card p-6">
+                <div className="w-10 h-10 rounded-lg bg-accent/10 flex items-center justify-center mb-4">
+                  <Icon className="text-accent" size={20} />
+                </div>
+                <h3 className="font-semibold text-text-primary mb-2">{title}</h3>
+                <p className="text-sm text-text-secondary leading-relaxed">{desc}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* How it works */}
+      <section className="py-16 px-6 bg-bg-card/30">
+        <div className="max-w-4xl mx-auto text-center">
+          <h2 className="text-2xl font-bold mb-12">How it works</h2>
+          <div className="grid md:grid-cols-3 gap-8">
+            {[
+              { step: "01", title: "Upload Past Papers", desc: "Upload GTU question papers or browse our growing library of verified papers." },
+              { step: "02", title: "AI Analyzes Patterns", desc: "Our model detects question patterns, frequency, and unit weightage across years." },
+              { step: "03", title: "Get Predictions", desc: "Receive a ranked list of high-probability questions with confidence scores." },
+            ].map(({ step, title, desc }) => (
+              <div key={step} className="flex flex-col items-center">
+                <div className="w-12 h-12 rounded-full bg-accent/10 border border-accent/30 flex items-center justify-center text-accent font-bold text-sm mb-4">
+                  {step}
+                </div>
+                <h3 className="font-semibold mb-2">{title}</h3>
+                <p className="text-sm text-text-secondary">{desc}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* CTA */}
+      <section className="py-20 px-6 text-center">
+        <div className="max-w-xl mx-auto">
+          <div className="flex justify-center mb-4">
+            <Users className="text-accent" size={32} />
+          </div>
+          <h2 className="text-3xl font-bold mb-4">Join GTU students studying smarter</h2>
+          <p className="text-text-secondary mb-8">Free forever for students. No credit card needed.</p>
+          <Link
+            href="/register"
+            className="inline-flex items-center gap-2 px-8 py-3.5 rounded-lg bg-accent text-white font-semibold hover:bg-accent/90 transition-colors text-base"
+          >
+            Sign Up Free
+            <ArrowRight size={18} />
+          </Link>
+        </div>
+      </section>
+
+      <footer className="border-t border-border py-6 px-6 text-center text-xs text-text-secondary">
+        © {new Date().getFullYear()} GTU ExamAI. Built for GTU students.
       </footer>
     </div>
   );
