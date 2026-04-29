@@ -27,9 +27,10 @@ export async function middleware(req: NextRequest) {
 
   const { pathname } = req.nextUrl;
   const isAuthRoute = pathname.startsWith("/login") || pathname.startsWith("/register");
+  const isPublicRoute = isAuthRoute || pathname === "/";
   const isAdminRoute = pathname.startsWith("/admin");
 
-  if (!session && !isAuthRoute) {
+  if (!session && !isPublicRoute) {
     return NextResponse.redirect(new URL("/login", req.url));
   }
 

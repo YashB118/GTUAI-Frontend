@@ -100,6 +100,8 @@ export default function PredictPage() {
   const [uploadedFileName, setUploadedFileName] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
   const pollRef = useRef<NodeJS.Timeout | null>(null);
+  const paperStatusRef = useRef<PaperStatus>("idle");
+  const selectedSubjectIdRef = useRef<string | null>(null);
 
   // Answer modal
   const [modalPrediction, setModalPrediction] = useState<Prediction | null>(null);
@@ -112,14 +114,19 @@ export default function PredictPage() {
     setModalPrediction(p);
     setCopied(false);
 
-    // Check in-memory cache first
-    if (answersCache.current[p.pattern_id]) {
+    // Only use cache for questions with a real pattern_id.
+    // LLM-generated predictions have pattern_id=null — they all map to the
+    // same JS key ("null") and would collide, showing the first answer for all.
+    if (p.pattern_id && answersCache.current[p.pattern_id]) {
       setModalAnswer(answersCache.current[p.pattern_id]);
       return;
     }
 
     setModalAnswer(null);
     setAnswerLoading(true);
+    // Capture which question this load is for so a stale response from a
+    // previous click can't overwrite the answer for the currently open question.
+    const loadKey = p.pattern_id ?? p.question;
     try {
       const data = await api.post("/answers/generate", {
         question_text: p.question,
@@ -131,12 +138,28 @@ export default function PredictPage() {
         text: data.answer || "No answer available.",
         sources: data.sources || [],
       };
-      answersCache.current[p.pattern_id] = payload;
-      setModalAnswer(payload);
+      if (p.pattern_id) answersCache.current[p.pattern_id] = payload;
+      // Only update state if the modal is still showing this question
+      setModalPrediction(cur => {
+        if (!cur) return cur;
+        const curKey = cur.pattern_id ?? cur.question;
+        if (curKey === loadKey) setModalAnswer(payload);
+        return cur;
+      });
     } catch {
-      setModalAnswer({ text: "Failed to generate answer. Please try again.", sources: [] });
+      setModalPrediction(cur => {
+        if (!cur) return cur;
+        const curKey = cur.pattern_id ?? cur.question;
+        if (curKey === loadKey) setModalAnswer({ text: "Failed to generate answer. Please try again.", sources: [] });
+        return cur;
+      });
     } finally {
-      setAnswerLoading(false);
+      setModalPrediction(cur => {
+        if (!cur) return cur;
+        const curKey = cur.pattern_id ?? cur.question;
+        if (curKey === loadKey) setAnswerLoading(false);
+        return cur;
+      });
     }
   };
 
@@ -224,19 +247,28 @@ export default function PredictPage() {
     }
   }, [selectedSubjectId, subjects, loadPredictions]);
 
+  // Keep refs in sync so the interval can read latest values without re-creating
+  useEffect(() => { paperStatusRef.current = paperStatus; }, [paperStatus]);
+  useEffect(() => { selectedSubjectIdRef.current = selectedSubjectId ?? null; }, [selectedSubjectId]);
+
   useEffect(() => {
-    if (!paperId || !["queued", "processing"].includes(paperStatus)) {
-      if (pollRef.current) clearInterval(pollRef.current);
-      return;
-    }
+    if (!paperId) return;
+    if (pollRef.current) clearInterval(pollRef.current);
+
     pollRef.current = setInterval(async () => {
+      if (!["queued", "processing"].includes(paperStatusRef.current)) {
+        if (pollRef.current) clearInterval(pollRef.current);
+        return;
+      }
       try {
         const status = await api.get(`/papers/${paperId}/status`);
-        const mapped = status.processing_status === "pending" ? "queued" : status.processing_status;
-        setPaperStatus(mapped as PaperStatus);
+        const mapped: PaperStatus = status.processing_status === "pending" ? "queued" : status.processing_status;
+        setPaperStatus(mapped);
+        paperStatusRef.current = mapped;
         if (status.processing_status === "done") {
           setQuestionCount(status.question_count || 0);
-          if (selectedSubjectId) setTimeout(() => loadPredictions(selectedSubjectId, true), 2000);
+          const sid = selectedSubjectIdRef.current;
+          if (sid) setTimeout(() => loadPredictions(sid, true), 2000);
         }
         if (["done", "failed"].includes(status.processing_status)) {
           if (pollRef.current) clearInterval(pollRef.current);
@@ -244,7 +276,7 @@ export default function PredictPage() {
       } catch {}
     }, 3000);
     return () => { if (pollRef.current) clearInterval(pollRef.current); };
-  }, [paperId, paperStatus, selectedSubjectId, loadPredictions]);
+  }, [paperId, loadPredictions]);
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const f = e.target.files?.[0];
@@ -293,7 +325,8 @@ export default function PredictPage() {
           <select
             value={selectedSubjectId}
             onChange={e => setSelectedSubjectId(e.target.value)}
-            className="w-full bg-bg-card border border-border rounded-xl px-4 py-3 text-sm text-text-primary appearance-none pr-8 focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent/30 font-medium"
+            style={{ colorScheme: "inherit" }}
+            className="w-full bg-bg-elevated border border-border rounded-xl px-4 py-3 text-sm text-text-primary appearance-none pr-8 focus:outline-none focus:border-accent/60 focus:ring-2 focus:ring-accent/15 focus:bg-bg-card font-medium transition-all duration-200"
           >
             <option value="">Select a subject to view predictions...</option>
             {subjects.map(s => (
@@ -307,7 +340,7 @@ export default function PredictPage() {
         {selectedSubjectId && (
           <button
             onClick={() => loadPredictions(selectedSubjectId, true)}
-            className="flex items-center gap-1.5 text-xs text-text-secondary hover:text-text-primary transition-colors px-3 py-2.5 rounded-xl bg-bg-card border border-border hover:border-accent/30"
+            className="flex items-center gap-1.5 text-xs text-text-secondary hover:text-text-primary transition-colors px-3 py-2.5 rounded-xl card-depth hover:card-depth-hover"
           >
             <RefreshCw size={12} />
           </button>
@@ -315,7 +348,7 @@ export default function PredictPage() {
       </div>
 
       {!selectedSubjectId && (
-        <div className="bg-bg-card border border-border rounded-2xl p-16 text-center">
+        <div className="rounded-2xl p-16 text-center card-depth">
           <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-accent/10 border border-accent/20 mb-5">
             <BookOpen size={28} className="text-accent" />
           </div>
@@ -330,10 +363,10 @@ export default function PredictPage() {
         <>
           {/* Predicted paper */}
           {!loadingPredictions && predictions.length > 0 && (
-            <div className="bg-bg-card border border-border rounded-2xl overflow-hidden">
+            <div className="rounded-2xl overflow-hidden card-depth">
               {/* Paper header */}
               <div className="px-6 py-4 border-b border-border"
-                style={{ background: "linear-gradient(135deg, #6C63FF0D, transparent)" }}>
+                style={{ background: "linear-gradient(145deg, rgba(108,99,255,0.06), transparent)" }}>
                 <div className="flex items-start justify-between gap-4">
                   <div>
                     <div className="flex items-center gap-2 mb-1">
@@ -464,7 +497,7 @@ export default function PredictPage() {
 
           {/* Loading skeleton */}
           {loadingPredictions && (
-            <div className="bg-bg-card border border-border rounded-2xl overflow-hidden">
+            <div className="rounded-2xl overflow-hidden card-depth">
               <div className="px-6 py-4 border-b border-border">
                 <LoadingSkeleton className="h-5 w-48 rounded" />
                 <LoadingSkeleton className="h-3 w-32 rounded mt-2" />
@@ -485,7 +518,7 @@ export default function PredictPage() {
 
           {/* No predictions */}
           {!loadingPredictions && predictions.length === 0 && (
-            <div className="bg-bg-card border border-border rounded-2xl p-12 text-center">
+            <div className="rounded-2xl p-12 text-center card-depth">
               <Sparkles size={28} className="mx-auto text-text-muted mb-3" />
               <p className="text-sm font-medium text-text-secondary">No predictions yet</p>
               <p className="text-xs text-text-muted mt-1 max-w-xs mx-auto">
@@ -530,7 +563,8 @@ export default function PredictPage() {
                     <select
                       value={year}
                       onChange={e => setYear(e.target.value)}
-                      className="w-full bg-bg-elevated border border-border rounded-lg px-3 py-2 text-sm text-text-primary focus:outline-none focus:border-accent"
+                      style={{ colorScheme: "inherit" }}
+                      className="w-full bg-bg-elevated border border-border rounded-lg px-3 py-2 text-sm text-text-primary focus:outline-none focus:border-accent/60 focus:ring-2 focus:ring-accent/15 appearance-none"
                     >
                       {YEARS.map(y => <option key={y} value={y}>{y}</option>)}
                     </select>
@@ -540,7 +574,8 @@ export default function PredictPage() {
                     <select
                       value={examType}
                       onChange={e => setExamType(e.target.value)}
-                      className="w-full bg-bg-elevated border border-border rounded-lg px-3 py-2 text-sm text-text-primary focus:outline-none focus:border-accent"
+                      style={{ colorScheme: "inherit" }}
+                      className="w-full bg-bg-elevated border border-border rounded-lg px-3 py-2 text-sm text-text-primary focus:outline-none focus:border-accent/60 focus:ring-2 focus:ring-accent/15 appearance-none"
                     >
                       {EXAM_TYPES.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
                     </select>
@@ -595,7 +630,7 @@ export default function PredictPage() {
           onClick={closeModal}
         >
           <div
-            className="bg-bg-card border border-border rounded-2xl w-full max-w-2xl max-h-[85vh] overflow-y-auto shadow-2xl"
+            className="rounded-2xl w-full max-w-2xl max-h-[85vh] overflow-y-auto animate-scale-in bg-bg-card border border-border shadow-modal"
             onClick={e => e.stopPropagation()}
           >
             {/* Modal header */}

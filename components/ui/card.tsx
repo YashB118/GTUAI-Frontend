@@ -11,9 +11,9 @@ export function Card({ children, className, accent, hover }: CardProps) {
   return (
     <div
       className={cn(
-        "bg-bg-card border border-border rounded-lg p-5 transition-all duration-200",
-        hover && "hover:border-accent/40 hover:bg-card-gradient hover:-translate-y-0.5 cursor-pointer",
-        accent && "border-accent/30 shadow-accent bg-card-gradient",
+        "rounded-xl p-5 transition-all duration-300 card-depth",
+        hover && "hover:card-depth-hover hover:-translate-y-px cursor-pointer",
+        accent && "ring-1 ring-accent/20 shadow-accent",
         className
       )}
     >
@@ -27,7 +27,7 @@ export function CardHeader({ children, className }: { children: React.ReactNode;
 }
 
 export function CardTitle({ children, className }: { children: React.ReactNode; className?: string }) {
-  return <h3 className={cn("text-base font-medium text-text-primary", className)}>{children}</h3>;
+  return <h3 className={cn("text-[12px] font-medium text-text-secondary uppercase tracking-[0.06em]", className)}>{children}</h3>;
 }
 
 export function CardContent({ children, className }: { children: React.ReactNode; className?: string }) {

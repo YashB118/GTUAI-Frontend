@@ -9,13 +9,13 @@ interface SelectProps extends SelectHTMLAttributes<HTMLSelectElement> {
 }
 
 const Select = forwardRef<HTMLSelectElement, SelectProps>(
-  ({ className, label, error, id, options, placeholder, ...props }, ref) => {
+  ({ className, label, error, id, options, placeholder, style, ...props }, ref) => {
     return (
       <div className="flex flex-col gap-1.5">
         {label && (
           <label
             htmlFor={id}
-            className="text-xs font-medium uppercase tracking-wide text-text-secondary"
+            className="text-[11px] font-medium uppercase tracking-[0.07em] text-text-muted"
           >
             {label}
           </label>
@@ -23,10 +23,12 @@ const Select = forwardRef<HTMLSelectElement, SelectProps>(
         <select
           ref={ref}
           id={id}
+          style={{ colorScheme: "inherit", ...style }}
           className={cn(
-            "w-full rounded-md bg-bg-elevated border border-border px-3.5 py-2.5 text-sm text-text-primary",
-            "focus:outline-none focus:border-accent focus:shadow-accent-glow",
-            "transition-all duration-200 cursor-pointer",
+            "w-full rounded-lg bg-bg-elevated border border-border",
+            "px-3.5 py-2.5 text-[13px] text-text-primary",
+            "focus:outline-none focus:border-accent/60 focus:ring-2 focus:ring-accent/15",
+            "transition-all duration-200 cursor-pointer appearance-none",
             "disabled:opacity-50 disabled:cursor-not-allowed",
             error && "border-red-500/50",
             className
@@ -39,12 +41,12 @@ const Select = forwardRef<HTMLSelectElement, SelectProps>(
             </option>
           )}
           {options.map((opt) => (
-            <option key={opt.value} value={opt.value} className="bg-bg-elevated">
+            <option key={opt.value} value={opt.value}>
               {opt.label}
             </option>
           ))}
         </select>
-        {error && <p className="text-xs text-red-400">{error}</p>}
+        {error && <p className="text-[11px] text-red-400 mt-0.5">{error}</p>}
       </div>
     );
   }

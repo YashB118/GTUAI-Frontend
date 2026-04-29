@@ -8,6 +8,7 @@ import {
   BookOpen,
   FileQuestion,
   Upload,
+  MessageSquare,
   X,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -15,6 +16,7 @@ import { cn } from "@/lib/utils";
 const navItems = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/predict", label: "Predict Exam", icon: Sparkles },
+  { href: "/chat", label: "GTU GPT", icon: MessageSquare },
   { href: "/materials", label: "Study Materials", icon: BookOpen },
   { href: "/question-bank", label: "Question Bank", icon: FileQuestion },
   { href: "/my-uploads", label: "My Uploads", icon: Upload },
@@ -30,36 +32,36 @@ export function StudentSidebar({ open, onClose }: StudentSidebarProps) {
 
   return (
     <>
-      {/* Mobile overlay */}
       {open && (
         <div
-          className="fixed inset-0 z-20 bg-black/60 lg:hidden"
+          className="fixed inset-0 z-20 bg-black/70 backdrop-blur-sm lg:hidden"
           onClick={onClose}
         />
       )}
 
       <aside
         className={cn(
-          "fixed top-0 left-0 z-30 h-full w-60 bg-bg-primary border-r border-border flex flex-col transition-transform duration-300",
+          "fixed top-0 left-0 z-30 h-full w-[220px] flex flex-col transition-transform duration-300 ease-out",
+          "glass border-r border-border",
           "lg:translate-x-0 lg:static lg:z-auto",
           open ? "translate-x-0" : "-translate-x-full"
         )}
       >
-        {/* Logo */}
-        <div className="flex items-center justify-between h-16 px-5 border-b border-border">
-          <span className="text-base font-semibold tracking-tight text-text-primary">
+        <div className="flex items-center justify-between h-14 px-5">
+          <span className="text-[15px] font-semibold tracking-[-0.03em] text-text-primary">
             GTU <span className="text-accent">ExamAI</span>
           </span>
           <button
             onClick={onClose}
-            className="lg:hidden text-text-muted hover:text-text-primary transition-colors"
+            className="lg:hidden text-text-muted hover:text-text-primary transition-colors p-1 rounded-md hover:bg-bg-elevated"
           >
-            <X size={18} />
+            <X size={16} />
           </button>
         </div>
 
-        {/* Nav */}
-        <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
+        <div className="mx-4 h-px bg-border/50" />
+
+        <nav className="flex-1 px-3 py-4 space-y-0.5 overflow-y-auto">
           {navItems.map(({ href, label, icon: Icon }) => {
             const active = pathname === href || pathname.startsWith(href + "/");
             return (
@@ -68,22 +70,25 @@ export function StudentSidebar({ open, onClose }: StudentSidebarProps) {
                 href={href}
                 onClick={onClose}
                 className={cn(
-                  "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-all duration-150",
+                  "flex items-center gap-3 px-3 py-2 rounded-lg text-[13px] font-medium transition-all duration-200",
                   active
-                    ? "bg-accent/10 text-accent border-l-2 border-accent pl-2.5"
+                    ? "bg-accent/10 text-accent"
                     : "text-text-secondary hover:text-text-primary hover:bg-bg-elevated"
                 )}
               >
-                <Icon size={16} className="shrink-0" />
+                <Icon
+                  size={15}
+                  className={cn("shrink-0", active ? "text-accent" : "text-text-muted")}
+                />
                 {label}
               </Link>
             );
           })}
         </nav>
 
-        {/* Version badge */}
-        <div className="px-5 py-4 border-t border-border">
-          <p className="text-xs text-text-muted">Phase 3 · Active</p>
+        <div className="px-5 py-4">
+          <div className="mx-0 mb-3 h-px bg-border/50" />
+          <p className="text-[11px] text-text-muted tracking-wide">GTU ExamAI · v6</p>
         </div>
       </aside>
     </>

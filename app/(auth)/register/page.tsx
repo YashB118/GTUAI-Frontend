@@ -63,8 +63,6 @@ export default function RegisterPage() {
     setLoading(true);
 
     try {
-      // Call backend /auth/register — this does BOTH Supabase auth signup
-      // AND inserts the profile row into public.users (branch, semester, enrollment_no etc.)
       const res = await fetch(`${BACKEND_URL}/auth/register`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -94,24 +92,25 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="min-h-screen bg-bg-primary flex items-center justify-center px-4 py-8">
-      <div className="w-full max-w-md animate-fade-in">
+    <div className="min-h-screen bg-bg-primary flex items-center justify-center px-4 py-10">
+      <div className="w-full max-w-[380px] animate-blur-in">
+
         {/* Logo */}
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-12 h-12 rounded-lg bg-accent/10 border border-accent/20 mb-4">
-            <Sparkles className="w-6 h-6 text-accent" />
+          <div className="inline-flex items-center justify-center w-11 h-11 rounded-2xl bg-accent/10 mb-5" style={{ boxShadow: "0 0 0 1px rgba(108,99,255,0.2), 0 4px 16px rgba(108,99,255,0.1)" }}>
+            <Sparkles className="w-5 h-5 text-accent" />
           </div>
-          <h1 className="text-2xl font-semibold tracking-tight text-text-primary">
+          <h1 className="text-[22px] font-semibold tracking-[-0.03em] text-text-primary">
             GTU ExamAI
           </h1>
-          <p className="text-sm text-text-secondary mt-1">Create your student account</p>
+          <p className="text-[13px] text-text-secondary mt-1">Create your student account</p>
         </div>
 
         {/* Card */}
-        <div className="bg-bg-card border border-border rounded-lg p-6 space-y-5">
+        <div className="rounded-2xl p-7 space-y-6 bg-bg-card border border-border" style={{ boxShadow: "0 1px 2px rgba(0,0,0,0.3)" }}>
           <div>
-            <h2 className="text-xl font-semibold text-text-primary">Create account</h2>
-            <p className="text-sm text-text-secondary mt-0.5">All fields required</p>
+            <h2 className="text-[17px] font-semibold tracking-[-0.02em] text-text-primary">Create account</h2>
+            <p className="text-[13px] text-text-secondary mt-0.5">All fields required unless marked optional</p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -181,23 +180,24 @@ export default function RegisterPage() {
             />
 
             {error && (
-              <p className="text-sm text-red-400 bg-red-500/10 border border-red-500/20 rounded-md px-3 py-2">
+              <p className="text-[12px] text-red-400 bg-red-500/8 border border-red-500/15 rounded-lg px-3 py-2.5">
                 {error}
               </p>
             )}
 
-            <Button type="submit" className="w-full" loading={loading}>
+            <Button type="submit" className="w-full mt-1" loading={loading} size="lg">
               Create Account
             </Button>
           </form>
 
-          <p className="text-center text-sm text-text-secondary">
+          <p className="text-center text-[13px] text-text-secondary">
             Already have an account?{" "}
-            <Link href="/login" className="text-accent hover:text-accent-hover transition-colors">
+            <Link href="/login" className="text-accent hover:text-accent-hover transition-colors font-medium">
               Sign in
             </Link>
           </p>
         </div>
+
       </div>
     </div>
   );

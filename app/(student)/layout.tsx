@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { StudentSidebar } from "@/components/layout/StudentSidebar";
 import { Topbar } from "@/components/layout/Topbar";
+import { MobileNav } from "@/components/layout/MobileNav";
 import { createClient } from "@/lib/supabase/client";
 
 interface UserProfile {
@@ -45,10 +46,11 @@ export default function StudentLayout({ children }: { children: React.ReactNode 
           userBranch={profile.branch}
           userSemester={profile.semester}
         />
-        <main className="flex-1 overflow-y-auto px-4 lg:px-8 py-6 animate-fade-in">
+        <main className="flex-1 overflow-y-auto px-5 lg:px-10 py-8 pb-24 md:pb-8 animate-fade-in">
           {children}
         </main>
       </div>
+      <MobileNav />
     </div>
   );
 }

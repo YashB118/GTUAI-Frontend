@@ -1,100 +1,133 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { BarChart3, RefreshCw, FileText, BookOpen, Users, GraduationCap } from "lucide-react";
+import {
+  BarChart3, RefreshCw, FileText, BookOpen, Users, GraduationCap, Sparkles, Clock,
+} from "lucide-react";
+import {
+  LineChart, Line, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Legend,
+} from "recharts";
 import { LoadingSkeleton } from "@/components/shared/LoadingSkeleton";
 import { api } from "@/lib/api";
 
-interface Paper {
-  id: string;
-  processing_status: string;
-  exam_type: string;
-  subjects?: { name: string; code: string };
+interface Overview {
+  total_students: number;
+  total_admins: number;
+  total_papers: number;
+  total_materials: number;
+  pending_approvals: number;
+  approved_materials: number;
+  rejected_materials: number;
+  total_questions: number;
+  total_subjects: number;
+  total_patterns: number;
 }
 
-interface Material {
-  id: string;
-  approval_status: string;
-  processing_status: string | null;
-  material_type: string;
+interface UploadPoint {
+  date: string;
+  papers: number;
+  materials: number;
 }
 
-interface Subject {
+interface TopSubject {
   id: string;
   name: string;
   code: string | null;
-  branch: string | null;
+  paper_count: number;
 }
 
-interface User {
+interface TopMaterial {
   id: string;
-  role: string;
-  branch: string | null;
+  title: string;
+  material_type: string;
+  chunk_count: number | null;
+  file_size_kb: number;
+  subjects?: { name: string };
 }
 
-function groupCount<T>(items: T[], key: (item: T) => string): [string, number][] {
-  const map: Record<string, number> = {};
-  for (const item of items) {
-    const k = key(item) || "unknown";
-    map[k] = (map[k] || 0) + 1;
-  }
-  return Object.entries(map).sort((a, b) => b[1] - a[1]);
+interface Signup {
+  id: string;
+  full_name: string;
+  email: string;
+  branch: string | null;
+  semester: number | null;
+  enrollment_no: string | null;
+  created_at: string;
 }
+
+const EMPTY: Overview = {
+  total_students: 0, total_admins: 0, total_papers: 0, total_materials: 0,
+  pending_approvals: 0, approved_materials: 0, rejected_materials: 0,
+  total_questions: 0, total_subjects: 0, total_patterns: 0,
+};
+
+const ACCENT = "#6C63FF";
+const BLUE = "#5B8DEF";
+const GRID = "#2A2A35";
+const TICK = "#8888A0";
 
 export default function AnalyticsPage() {
-  const [papers, setPapers] = useState<Paper[]>([]);
-  const [materials, setMaterials] = useState<Material[]>([]);
-  const [subjects, setSubjects] = useState<Subject[]>([]);
-  const [users, setUsers] = useState<User[]>([]);
+  const [overview, setOverview] = useState<Overview>(EMPTY);
+  const [uploads, setUploads] = useState<UploadPoint[]>([]);
+  const [topSubjects, setTopSubjects] = useState<TopSubject[]>([]);
+  const [topMaterials, setTopMaterials] = useState<TopMaterial[]>([]);
+  const [signups, setSignups] = useState<Signup[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   const load = async () => {
     setLoading(true);
-    const [p, m, s, u] = await Promise.all([
-      api.get("/papers/").catch(() => []),
-      api.get("/materials/?approved_only=false").catch(() => []),
-      api.get("/subjects").catch(() => []),
-      api.get("/auth/users").catch(() => []),
-    ]);
-    setPapers(Array.isArray(p) ? p : []);
-    setMaterials(Array.isArray(m) ? m : []);
-    setSubjects(Array.isArray(s) ? s : []);
-    setUsers(Array.isArray(u) ? u : []);
-    setLoading(false);
+    setError(null);
+    try {
+      const [o, u, ts, tm, su] = await Promise.all([
+        api.get("/admin/analytics/overview").catch(() => EMPTY),
+        api.get("/admin/analytics/uploads-chart?days=14").catch(() => []),
+        api.get("/admin/analytics/top-subjects?limit=8").catch(() => []),
+        api.get("/admin/analytics/top-materials?limit=10").catch(() => []),
+        api.get("/admin/analytics/recent-signups?limit=10").catch(() => []),
+      ]);
+      setOverview(o || EMPTY);
+      setUploads(Array.isArray(u) ? u : []);
+      setTopSubjects(Array.isArray(ts) ? ts : []);
+      setTopMaterials(Array.isArray(tm) ? tm : []);
+      setSignups(Array.isArray(su) ? su : []);
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : "Failed to load analytics");
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => { load(); }, []);
 
-  const papersByStatus = groupCount(papers, p => p.processing_status);
-  const papersByExamType = groupCount(papers, p => p.exam_type);
-  const papersBySubject = groupCount(papers, p => p.subjects?.name || "Unknown");
-  const materialsByStatus = groupCount(materials, m => m.approval_status);
-  const materialsByType = groupCount(materials, m => m.material_type);
-  const usersByBranch = groupCount(users, u => u.branch || "Unknown");
-
   const statCards = [
-    { label: "Question Papers", value: papers.length, icon: FileText, color: "text-accent" },
-    { label: "Study Materials", value: materials.length, icon: BookOpen, color: "text-blue-400" },
-    { label: "Subjects", value: subjects.length, icon: GraduationCap, color: "text-emerald-400" },
-    { label: "Users", value: users.length, icon: Users, color: "text-violet-400" },
+    { label: "Students", value: overview.total_students, icon: Users, color: "text-accent" },
+    { label: "Question Papers", value: overview.total_papers, icon: FileText, color: "text-blue-400" },
+    { label: "Materials Approved", value: overview.approved_materials, icon: BookOpen, color: "text-emerald-400" },
+    { label: "Questions Extracted", value: overview.total_questions, icon: Sparkles, color: "text-violet-400" },
+    { label: "Subjects", value: overview.total_subjects, icon: GraduationCap, color: "text-amber-400" },
+    { label: "Patterns Detected", value: overview.total_patterns, icon: BarChart3, color: "text-pink-400" },
+    { label: "Pending Approvals", value: overview.pending_approvals, icon: Clock, color: "text-amber-400" },
+    { label: "Admins", value: overview.total_admins, icon: ShieldIcon, color: "text-text-secondary" },
   ];
 
   if (loading) {
     return (
-      <div className="max-w-5xl mx-auto space-y-6">
+      <div className="max-w-6xl mx-auto space-y-6">
         <div className="flex items-center gap-3">
           <BarChart3 size={20} className="text-accent" />
           <h1 className="text-2xl font-semibold tracking-tight text-text-primary">Analytics</h1>
         </div>
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          {[1, 2, 3, 4].map(i => <LoadingSkeleton key={i} className="h-24 rounded-xl" />)}
+          {[1, 2, 3, 4, 5, 6, 7, 8].map(i => <LoadingSkeleton key={i} className="h-24 rounded-xl" />)}
         </div>
+        <LoadingSkeleton className="h-64 rounded-xl" />
       </div>
     );
   }
 
   return (
-    <div className="max-w-5xl mx-auto space-y-8">
+    <div className="max-w-6xl mx-auto space-y-7">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           <BarChart3 size={20} className="text-accent" />
@@ -109,6 +142,12 @@ export default function AnalyticsPage() {
         </button>
       </div>
 
+      {error && (
+        <div className="bg-amber-500/10 border border-amber-500/20 rounded-lg px-4 py-2 text-xs text-amber-400">
+          {error}
+        </div>
+      )}
+
       {/* Stat cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {statCards.map(({ label, value, icon: Icon, color }) => (
@@ -122,54 +161,128 @@ export default function AnalyticsPage() {
         ))}
       </div>
 
-      {/* Breakdown grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-        <BreakdownCard title="Papers by Status" rows={papersByStatus} total={papers.length} />
-        <BreakdownCard title="Papers by Exam Type" rows={papersByExamType} total={papers.length} />
-        <BreakdownCard title="Top Subjects (papers)" rows={papersBySubject.slice(0, 6)} total={papers.length} />
-        <BreakdownCard title="Materials by Status" rows={materialsByStatus} total={materials.length} />
-        <BreakdownCard title="Materials by Type" rows={materialsByType} total={materials.length} />
-        <BreakdownCard title="Users by Branch" rows={usersByBranch.slice(0, 6)} total={users.length} />
+      {/* Chart row */}
+      <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">
+        <div className="lg:col-span-3 bg-bg-card border border-border rounded-xl p-4">
+          <h3 className="text-xs font-semibold uppercase tracking-widest text-text-muted mb-4">
+            Uploads · last 14 days
+          </h3>
+          <div className="h-64">
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={uploads} margin={{ top: 5, right: 10, left: -20, bottom: 0 }}>
+                <CartesianGrid stroke={GRID} strokeDasharray="3 3" vertical={false} />
+                <XAxis
+                  dataKey="date"
+                  stroke={TICK}
+                  fontSize={10}
+                  tickFormatter={(v: string) => v.slice(5)}
+                />
+                <YAxis stroke={TICK} fontSize={10} allowDecimals={false} />
+                <Tooltip
+                  contentStyle={{
+                    background: "#1A1A24",
+                    border: `1px solid ${GRID}`,
+                    borderRadius: 8,
+                    fontSize: 12,
+                  }}
+                  labelStyle={{ color: "#F0F0F5" }}
+                />
+                <Legend wrapperStyle={{ fontSize: 11 }} />
+                <Line type="monotone" dataKey="papers" stroke={ACCENT} strokeWidth={2} dot={false} />
+                <Line type="monotone" dataKey="materials" stroke={BLUE} strokeWidth={2} dot={false} />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+
+        <div className="lg:col-span-2 bg-bg-card border border-border rounded-xl p-4">
+          <h3 className="text-xs font-semibold uppercase tracking-widest text-text-muted mb-4">
+            Top subjects (papers)
+          </h3>
+          <div className="h-64">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={topSubjects} layout="vertical" margin={{ top: 5, right: 10, left: 0, bottom: 0 }}>
+                <CartesianGrid stroke={GRID} strokeDasharray="3 3" horizontal={false} />
+                <XAxis type="number" stroke={TICK} fontSize={10} allowDecimals={false} />
+                <YAxis
+                  type="category"
+                  dataKey="name"
+                  stroke={TICK}
+                  fontSize={10}
+                  width={100}
+                  tickFormatter={(v: string) => v.length > 14 ? v.slice(0, 14) + "…" : v}
+                />
+                <Tooltip
+                  contentStyle={{
+                    background: "#1A1A24",
+                    border: `1px solid ${GRID}`,
+                    borderRadius: 8,
+                    fontSize: 12,
+                  }}
+                />
+                <Bar dataKey="paper_count" fill={ACCENT} radius={[0, 4, 4, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+      </div>
+
+      {/* Tables row */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <div className="bg-bg-card border border-border rounded-xl p-4">
+          <h3 className="text-xs font-semibold uppercase tracking-widest text-text-muted mb-3">
+            Top materials (by content size)
+          </h3>
+          {topMaterials.length === 0 ? (
+            <p className="text-xs text-text-muted">No approved materials yet.</p>
+          ) : (
+            <div className="space-y-1.5">
+              {topMaterials.map((m, i) => (
+                <div key={m.id} className="flex items-center justify-between gap-2 text-xs px-3 py-2 bg-bg-elevated rounded-lg">
+                  <div className="min-w-0 flex-1">
+                    <p className="text-text-primary truncate">{i + 1}. {m.title}</p>
+                    <p className="text-text-muted truncate">{m.subjects?.name} · {m.material_type}</p>
+                  </div>
+                  <span className="text-text-secondary font-medium shrink-0">
+                    {m.chunk_count ?? 0} chunks
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        <div className="bg-bg-card border border-border rounded-xl p-4">
+          <h3 className="text-xs font-semibold uppercase tracking-widest text-text-muted mb-3">
+            Recent student signups
+          </h3>
+          {signups.length === 0 ? (
+            <p className="text-xs text-text-muted">No signups yet.</p>
+          ) : (
+            <div className="space-y-1.5">
+              {signups.map(s => (
+                <div key={s.id} className="flex items-center justify-between gap-2 text-xs px-3 py-2 bg-bg-elevated rounded-lg">
+                  <div className="min-w-0 flex-1">
+                    <p className="text-text-primary truncate">{s.full_name}</p>
+                    <p className="text-text-muted truncate">{s.email} · {s.branch || "—"} S{s.semester || "?"}</p>
+                  </div>
+                  <span className="text-text-muted shrink-0">
+                    {new Date(s.created_at).toLocaleDateString()}
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
 }
 
-function BreakdownCard({
-  title,
-  rows,
-  total,
-}: {
-  title: string;
-  rows: [string, number][];
-  total: number;
-}) {
+function ShieldIcon({ size = 14, className = "" }: { size?: number; className?: string }) {
   return (
-    <div className="bg-bg-card border border-border rounded-xl p-4">
-      <h3 className="text-xs font-semibold uppercase tracking-widest text-text-muted mb-3">{title}</h3>
-      {rows.length === 0 ? (
-        <p className="text-xs text-text-muted">No data</p>
-      ) : (
-        <div className="space-y-2">
-          {rows.map(([label, count]) => {
-            const pct = total > 0 ? Math.round((count / total) * 100) : 0;
-            return (
-              <div key={label}>
-                <div className="flex items-center justify-between mb-1">
-                  <span className="text-xs text-text-secondary capitalize">{label}</span>
-                  <span className="text-xs font-medium text-text-primary">{count}</span>
-                </div>
-                <div className="h-1.5 bg-bg-elevated rounded-full overflow-hidden">
-                  <div
-                    className="h-full bg-accent/60 rounded-full"
-                    style={{ width: `${pct}%` }}
-                  />
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      )}
-    </div>
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+      <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+    </svg>
   );
 }

@@ -2,7 +2,7 @@ import { createClient } from "@/lib/supabase/client";
 
 const BASE_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000";
 
-async function getToken(): Promise<string | null> {
+export async function getToken(): Promise<string | null> {
   if (typeof window === "undefined") return null;
   try {
     const supabase = createClient();
@@ -37,6 +37,8 @@ export const api = {
   get: (path: string) => fetchWithAuth(path),
   post: (path: string, body: unknown) =>
     fetchWithAuth(path, { method: "POST", body: JSON.stringify(body) }),
+  put: (path: string, body?: unknown) =>
+    fetchWithAuth(path, { method: "PUT", body: body ? JSON.stringify(body) : undefined }),
   patch: (path: string, body?: unknown) =>
     fetchWithAuth(path, { method: "PATCH", body: body ? JSON.stringify(body) : undefined }),
   delete: (path: string) => fetchWithAuth(path, { method: "DELETE" }),

@@ -43,25 +43,26 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen bg-bg-primary flex items-center justify-center px-4">
-      <div className="w-full max-w-md animate-fade-in">
+      <div className="w-full max-w-[360px] animate-blur-in">
+
         {/* Logo */}
-        <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-12 h-12 rounded-lg bg-accent/10 border border-accent/20 mb-4">
-            <Sparkles className="w-6 h-6 text-accent" />
+        <div className="text-center mb-10">
+          <div className="inline-flex items-center justify-center w-11 h-11 rounded-2xl bg-accent/10 mb-5" style={{ boxShadow: "0 0 0 1px rgba(108,99,255,0.2), 0 4px 16px rgba(108,99,255,0.1)" }}>
+            <Sparkles className="w-5 h-5 text-accent" />
           </div>
-          <h1 className="text-2xl font-semibold tracking-tight text-text-primary">
+          <h1 className="text-[22px] font-semibold tracking-[-0.03em] text-text-primary">
             GTU ExamAI
           </h1>
-          <p className="text-sm text-text-secondary mt-1">
+          <p className="text-[13px] text-text-secondary mt-1">
             Smart predictions for smarter prep
           </p>
         </div>
 
         {/* Card */}
-        <div className="bg-bg-card border border-border rounded-lg p-6 space-y-5">
+        <div className="rounded-2xl p-7 space-y-6 bg-bg-card border border-border" style={{ boxShadow: "0 1px 2px rgba(0,0,0,0.3), 0 0 0 1px rgb(var(--c-border)/0.6)" }}>
           <div>
-            <h2 className="text-xl font-semibold text-text-primary">Welcome back</h2>
-            <p className="text-sm text-text-secondary mt-0.5">Sign in to your account</p>
+            <h2 className="text-[17px] font-semibold tracking-[-0.02em] text-text-primary">Welcome back</h2>
+            <p className="text-[13px] text-text-secondary mt-0.5">Sign in to your account</p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -87,23 +88,24 @@ export default function LoginPage() {
             />
 
             {error && (
-              <p className="text-sm text-red-400 bg-red-500/10 border border-red-500/20 rounded-md px-3 py-2">
+              <p className="text-[12px] text-red-400 bg-red-500/8 border border-red-500/15 rounded-lg px-3 py-2.5">
                 {error}
               </p>
             )}
 
-            <Button type="submit" className="w-full" loading={loading}>
+            <Button type="submit" className="w-full mt-1" loading={loading} size="lg">
               Sign In
             </Button>
           </form>
 
-          <p className="text-center text-sm text-text-secondary">
+          <p className="text-center text-[13px] text-text-secondary">
             No account?{" "}
-            <Link href="/register" className="text-accent hover:text-accent-hover transition-colors">
+            <Link href="/register" className="text-accent hover:text-accent-hover transition-colors font-medium">
               Register
             </Link>
           </p>
         </div>
+
       </div>
     </div>
   );
