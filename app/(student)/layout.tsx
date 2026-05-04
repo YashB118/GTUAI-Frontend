@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { StudentSidebar } from "@/components/layout/StudentSidebar";
 import { Topbar } from "@/components/layout/Topbar";
 import { MobileNav } from "@/components/layout/MobileNav";
+import { CommandPalette } from "@/components/ui/CommandPalette";
 import { createClient } from "@/lib/supabase/client";
 
 interface UserProfile {
@@ -14,6 +15,7 @@ interface UserProfile {
 
 export default function StudentLayout({ children }: { children: React.ReactNode }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [paletteOpen, setPaletteOpen] = useState(false);
   const [profile, setProfile] = useState<UserProfile>({});
 
   useEffect(() => {
@@ -32,6 +34,17 @@ export default function StudentLayout({ children }: { children: React.ReactNode 
     loadProfile();
   }, []);
 
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === "k") {
+        e.preventDefault();
+        setPaletteOpen(v => !v);
+      }
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, []);
+
   return (
     <div className="flex h-screen bg-bg-primary overflow-hidden">
       <StudentSidebar
@@ -41,6 +54,7 @@ export default function StudentLayout({ children }: { children: React.ReactNode 
       <div className="flex-1 flex flex-col overflow-hidden">
         <Topbar
           onMenuClick={() => setSidebarOpen(true)}
+          onSearchClick={() => setPaletteOpen(true)}
           userName={profile.full_name}
           userRole="student"
           userBranch={profile.branch}
@@ -51,6 +65,7 @@ export default function StudentLayout({ children }: { children: React.ReactNode 
         </main>
       </div>
       <MobileNav />
+      <CommandPalette open={paletteOpen} onClose={() => setPaletteOpen(false)} />
     </div>
   );
 }

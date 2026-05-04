@@ -5,6 +5,7 @@ import { Users, RefreshCw, Search, Download, Ban, ShieldCheck, X, FileText, Book
 import { Badge } from "@/components/ui/badge";
 import { LoadingSkeleton } from "@/components/shared/LoadingSkeleton";
 import { api } from "@/lib/api";
+import { toast } from "sonner";
 
 interface User {
   id: string;
@@ -50,13 +51,12 @@ export default function UsersPage() {
 
   const load = async () => {
     setLoading(true);
-    let data: User[] = [];
     try {
-      data = await api.get(`/admin/users?limit=200${search ? `&search=${encodeURIComponent(search)}` : ""}`);
+      const data = await api.get(`/admin/users?limit=200${search ? `&search=${encodeURIComponent(search)}` : ""}`);
+      setUsers(Array.isArray(data) ? data : []);
     } catch {
-      data = await api.get("/auth/users").catch(() => []);
+      setUsers([]);
     }
-    setUsers(Array.isArray(data) ? data : []);
     setLoading(false);
   };
 
@@ -74,7 +74,7 @@ export default function UsersPage() {
       await api.patch(path);
       setUsers(prev => prev.map(x => x.id === u.id ? { ...x, suspended: !u.suspended } : x));
     } catch (err: unknown) {
-      alert(err instanceof Error ? err.message : "Action failed");
+      toast.error(err instanceof Error ? err.message : "Action failed");
     }
     setActionId(null);
   };
@@ -85,8 +85,9 @@ export default function UsersPage() {
     try {
       await api.patch(`/admin/users/${confirmPromote.id}/promote`);
       setUsers(prev => prev.map(x => x.id === confirmPromote.id ? { ...x, role: "admin" } : x));
+      toast.success("User promoted to admin!");
     } catch (err: unknown) {
-      alert(err instanceof Error ? err.message : "Promote failed");
+      toast.error(err instanceof Error ? err.message : "Promote failed");
     }
     setActionId(null);
     setConfirmPromote(null);
@@ -122,7 +123,7 @@ export default function UsersPage() {
       a.click();
       URL.revokeObjectURL(url);
     } catch (err: unknown) {
-      alert(err instanceof Error ? err.message : "Export failed");
+      toast.error(err instanceof Error ? err.message : "Export failed");
     }
   };
 

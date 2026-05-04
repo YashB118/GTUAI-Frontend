@@ -88,7 +88,10 @@ export function StudentSidebar({ open, onClose }: StudentSidebarProps) {
 
         <div className="px-5 py-4">
           <div className="mx-0 mb-3 h-px bg-border/50" />
-          <p className="text-[11px] text-text-muted tracking-wide">GTU ExamAI · v6</p>
+          <div className="flex items-center justify-between">
+            <p className="text-[11px] text-text-muted tracking-wide">GTU ExamAI · v6</p>
+            <kbd className="text-[10px] text-text-muted border border-border/60 rounded px-1.5 py-0.5 font-mono">⌘K</kbd>
+          </div>
         </div>
       </aside>
     </>

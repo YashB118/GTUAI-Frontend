@@ -1,13 +1,14 @@
 "use client";
 
 import { useState } from "react";
-import { Menu, LogOut, ChevronDown } from "lucide-react";
+import { Menu, LogOut, ChevronDown, Search } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { UserAvatar } from "@/components/ui/UserAvatar";
 import { ThemeToggle } from "@/components/ui/ThemeToggle";
 
 interface TopbarProps {
   onMenuClick: () => void;
+  onSearchClick?: () => void;
   userName?: string;
   userRole?: string;
   userBranch?: string;
@@ -16,6 +17,7 @@ interface TopbarProps {
 
 export function Topbar({
   onMenuClick,
+  onSearchClick,
   userName = "Student",
   userRole = "student",
   userBranch,
@@ -40,7 +42,14 @@ export function Topbar({
         <Menu size={18} />
       </button>
 
-      <div className="hidden lg:block" />
+      <button
+        onClick={onSearchClick}
+        className="hidden lg:flex items-center gap-2.5 px-3 py-1.5 rounded-lg border border-border bg-bg-elevated hover:border-accent/40 transition-all text-text-muted hover:text-text-primary text-[13px]"
+      >
+        <Search size={13} />
+        <span>Search...</span>
+        <kbd className="text-[10px] border border-border rounded px-1.5 py-0.5 font-mono ml-1 text-text-muted">⌘K</kbd>
+      </button>
 
       <div className="flex items-center gap-2">
         <ThemeToggle />

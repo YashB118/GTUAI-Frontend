@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { GraduationCap, Plus, Trash2, RefreshCw, Edit2, X, FileText, BookOpen, Sparkles } from "lucide-react";
 import { LoadingSkeleton } from "@/components/shared/LoadingSkeleton";
 import { api } from "@/lib/api";
+import { toast } from "sonner";
 
 interface SubjectStats {
   id: string;
@@ -38,20 +39,12 @@ export default function SubjectsPage() {
 
   const load = async () => {
     setLoading(true);
-    // Try admin stats first, fall back to plain list
-    let data: SubjectStats[] = [];
     try {
-      data = await api.get("/admin/subjects/stats");
+      const data = await api.get("/admin/subjects/stats");
+      setSubjects(Array.isArray(data) ? data : []);
     } catch {
-      const basic = await api.get("/subjects").catch(() => []);
-      data = (Array.isArray(basic) ? basic : []).map((s: SubjectStats) => ({
-        ...s,
-        paper_count: 0,
-        material_count: 0,
-        question_count: 0,
-      }));
+      setSubjects([]);
     }
-    setSubjects(Array.isArray(data) ? data : []);
     setLoading(false);
   };
 
@@ -96,8 +89,9 @@ export default function SubjectsPage() {
       await api.patch(`/admin/subjects/${editing.id}`, updated);
       setEditing(null);
       await load();
+      toast.success("Subject updated!");
     } catch (err: unknown) {
-      alert(err instanceof Error ? err.message : "Update failed");
+      toast.error(err instanceof Error ? err.message : "Update failed");
     }
   };
 

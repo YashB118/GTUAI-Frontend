@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useRef, Suspense } from "react";
+import { useSearchParams } from "next/navigation";
 import {
   Sparkles, RefreshCw, ChevronDown, Upload,
   FileText, X, Plus, ChevronUp, BookOpen, Copy, Check, Printer,
@@ -11,6 +12,7 @@ import { api } from "@/lib/api";
 import { createClient } from "@/lib/supabase/client";
 import { ProcessingStatus } from "@/components/shared/ProcessingStatus";
 import { LoadingSkeleton } from "@/components/shared/LoadingSkeleton";
+import { toast } from "sonner";
 
 interface Subject {
   id: string;
@@ -59,6 +61,11 @@ const CONF_TEXT = {
   MEDIUM: "text-amber-400",
   LOW:    "text-red-400",
 };
+const CONF_BAR_COLOR = {
+  HIGH:   "bg-emerald-500",
+  MEDIUM: "bg-amber-500",
+  LOW:    "bg-red-500/70",
+};
 
 interface AnswerPayload {
   text: string;
@@ -79,7 +86,8 @@ function groupByUnit(predictions: Prediction[]): [string, Prediction[]][] {
   });
 }
 
-export default function PredictPage() {
+function PredictInner() {
+  const searchParams = useSearchParams();
   const [subjects, setSubjects] = useState<Subject[]>([]);
   const [selectedSubjectId, setSelectedSubjectId] = useState("");
   const [selectedSubject, setSelectedSubject] = useState<Subject | null>(null);
@@ -218,10 +226,16 @@ export default function PredictPage() {
       let url = "/subjects";
       if (profile?.branch) url += `?branch=${encodeURIComponent(profile.branch)}`;
       const data = await api.get(url).catch(() => []);
-      setSubjects(Array.isArray(data) ? data : []);
+      const subs = Array.isArray(data) ? data : [];
+      setSubjects(subs);
+      // If URL has ?subject=ID, auto-select it
+      const fromUrl = searchParams.get("subject");
+      if (fromUrl && subs.some((s: Subject) => s.id === fromUrl)) {
+        setSelectedSubjectId(fromUrl);
+      }
     }
     load();
-  }, []);
+  }, [searchParams]);
 
   const loadPredictions = useCallback(async (subjectId: string, forceRefresh = false) => {
     if (!subjectId) return;
@@ -267,8 +281,12 @@ export default function PredictPage() {
         paperStatusRef.current = mapped;
         if (status.processing_status === "done") {
           setQuestionCount(status.question_count || 0);
+          toast.success(`Paper processed — ${status.question_count || 0} questions extracted!`);
           const sid = selectedSubjectIdRef.current;
           if (sid) setTimeout(() => loadPredictions(sid, true), 2000);
+        }
+        if (status.processing_status === "failed") {
+          toast.error("Paper processing failed. Try uploading again.");
         }
         if (["done", "failed"].includes(status.processing_status)) {
           if (pollRef.current) clearInterval(pollRef.current);
@@ -281,8 +299,8 @@ export default function PredictPage() {
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const f = e.target.files?.[0];
     if (!f) return;
-    if (f.type !== "application/pdf") { alert("Only PDF files are allowed."); return; }
-    if (f.size > 10 * 1024 * 1024) { alert("File must be under 10 MB."); return; }
+    if (f.type !== "application/pdf") { toast.error("Only PDF files are allowed."); return; }
+    if (f.size > 10 * 1024 * 1024) { toast.error("File must be under 10 MB."); return; }
     setFile(f);
   };
 
@@ -302,8 +320,9 @@ export default function PredictPage() {
       setFile(null);
       if (fileInputRef.current) fileInputRef.current.value = "";
       setUploadOpen(false);
+      toast.success("Paper uploaded — analyzing questions...");
     } catch (e: unknown) {
-      alert(e instanceof Error ? e.message : "Upload failed");
+      toast.error(e instanceof Error ? e.message : "Upload failed");
     } finally {
       setUploading(false);
     }
@@ -453,8 +472,11 @@ export default function PredictPage() {
                         <div className="flex-1 py-3.5 pr-5 min-w-0">
                           <p className="text-sm text-text-primary leading-relaxed mb-2">{p.question}</p>
                           <div className="flex items-center gap-3 flex-wrap">
-                            <span className={`text-[11px] font-semibold ${CONF_TEXT[p.confidence]}`}>
-                              ● {p.confidence} · {Math.round(p.prediction_score)}%
+                            <span className={`text-[11px] font-semibold ${CONF_TEXT[p.confidence]} flex items-center gap-1.5`}>
+                              <span className="flex items-center gap-1">
+                                <span className={`inline-block h-1.5 rounded-full ${CONF_BAR_COLOR[p.confidence]}`} style={{ width: `${Math.max(16, Math.round(p.prediction_score) * 0.4)}px` }} />
+                              </span>
+                              {p.confidence} · {Math.round(p.prediction_score)}%
                             </span>
                             {p.years_asked.length > 0 && (
                               <span className="text-[11px] text-text-muted">
@@ -722,5 +744,13 @@ export default function PredictPage() {
         </div>
       )}
     </div>
+  );
+}
+
+export default function PredictPage() {
+  return (
+    <Suspense fallback={null}>
+      <PredictInner />
+    </Suspense>
   );
 }

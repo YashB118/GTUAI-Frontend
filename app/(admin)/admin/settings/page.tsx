@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { Settings, Save, Trash2, RotateCw, Sliders } from "lucide-react";
 import { LoadingSkeleton } from "@/components/shared/LoadingSkeleton";
 import { api } from "@/lib/api";
+import { toast } from "sonner";
 
 interface Subject {
   id: string;
@@ -62,8 +63,9 @@ export default function SettingsPage() {
       setOriginal(updated);
       setSavedFlash(true);
       setTimeout(() => setSavedFlash(false), 1800);
+      toast.success("Prediction weights saved!");
     } catch (e: unknown) {
-      alert(e instanceof Error ? e.message : "Save failed");
+      toast.error(e instanceof Error ? e.message : "Save failed");
     }
     setSaving(false);
   };

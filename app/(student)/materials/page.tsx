@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { LoadingSkeleton } from "@/components/shared/LoadingSkeleton";
 import { api } from "@/lib/api";
 import { createClient } from "@/lib/supabase/client";
+import { toast } from "sonner";
 
 interface Subject {
   id: string;
@@ -139,8 +140,11 @@ export default function MaterialsPage() {
       setFile(null);
       if (fileInputRef.current) fileInputRef.current.value = "";
       setUploadOpen(false);
+      toast.success("Material submitted for admin review!");
     } catch (err: unknown) {
-      setUploadError(err instanceof Error ? err.message : "Upload failed");
+      const msg = err instanceof Error ? err.message : "Upload failed";
+      setUploadError(msg);
+      toast.error(msg);
     } finally {
       setUploading(false);
     }
@@ -153,7 +157,7 @@ export default function MaterialsPage() {
       if (!res?.url) throw new Error("No URL");
       window.open(res.url, "_blank");
     } catch {
-      alert("Failed to get download link. Try again.");
+      toast.error("Failed to get download link. Try again.");
     } finally {
       setDownloading(null);
     }
