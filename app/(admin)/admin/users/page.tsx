@@ -73,6 +73,7 @@ export default function UsersPage() {
       const path = u.suspended ? `/admin/users/${u.id}/activate` : `/admin/users/${u.id}/suspend`;
       await api.patch(path);
       setUsers(prev => prev.map(x => x.id === u.id ? { ...x, suspended: !u.suspended } : x));
+      toast.success(u.suspended ? `${u.full_name} re-activated.` : `${u.full_name} suspended.`);
     } catch (err: unknown) {
       toast.error(err instanceof Error ? err.message : "Action failed");
     }

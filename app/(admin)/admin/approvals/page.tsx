@@ -5,6 +5,7 @@ import { CheckCircle, X, FileText, Clock, RefreshCw, Eye } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { LoadingSkeleton } from "@/components/shared/LoadingSkeleton";
 import { api } from "@/lib/api";
+import { toast } from "sonner";
 
 interface Material {
   id: string;
@@ -98,7 +99,10 @@ export default function ApprovalsPage() {
     setActionLoading(id);
     try {
       await api.post("/admin/materials/bulk-approve", { material_ids: [id] });
-    } catch {}
+      toast.success("Material approved and queued for AI indexing.");
+    } catch (e: unknown) {
+      toast.error(e instanceof Error ? e.message : "Approve failed");
+    }
     setActionLoading(null);
     if (previewId === id) { setPreviewId(null); setPreviewUrl(null); }
     await load();
@@ -111,7 +115,10 @@ export default function ApprovalsPage() {
         material_ids: [id],
         reason: rejectReason.trim() || undefined,
       });
-    } catch {}
+      toast.success("Material rejected.");
+    } catch (e: unknown) {
+      toast.error(e instanceof Error ? e.message : "Reject failed");
+    }
     setRejectTarget(null);
     setRejectReason("");
     setActionLoading(null);
@@ -126,7 +133,10 @@ export default function ApprovalsPage() {
       await api.post("/admin/materials/bulk-approve", {
         material_ids: Array.from(selectedIds),
       });
-    } catch {}
+      toast.success(`${selectedIds.size} material${selectedIds.size !== 1 ? "s" : ""} approved.`);
+    } catch (e: unknown) {
+      toast.error(e instanceof Error ? e.message : "Bulk approve failed");
+    }
     setBulkLoading(false);
     await load();
   };
@@ -139,7 +149,10 @@ export default function ApprovalsPage() {
         material_ids: Array.from(selectedIds),
         reason: bulkRejectReason.trim() || undefined,
       });
-    } catch {}
+      toast.success(`${selectedIds.size} material${selectedIds.size !== 1 ? "s" : ""} rejected.`);
+    } catch (e: unknown) {
+      toast.error(e instanceof Error ? e.message : "Bulk reject failed");
+    }
     setBulkLoading(false);
     setBulkRejectOpen(false);
     setBulkRejectReason("");

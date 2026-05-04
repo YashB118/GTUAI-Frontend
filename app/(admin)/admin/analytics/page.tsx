@@ -165,7 +165,7 @@ export default function AnalyticsPage() {
         <div className="flex items-center gap-3 bg-amber-500/8 border border-amber-500/20 rounded-xl px-4 py-3 text-sm text-amber-400">
           <Clock size={15} />
           <span><strong>{overview.pending_approvals}</strong> material{overview.pending_approvals !== 1 ? "s" : ""} waiting for approval</span>
-          <a href="/admin/approvals" className="ml-auto text-xs font-medium hover:underline">Review →</a>
+          <Link href="/admin/approvals" className="ml-auto text-xs font-medium hover:underline">Review →</Link>
         </div>
       )}
 
@@ -300,10 +300,3 @@ export default function AnalyticsPage() {
   );
 }
 
-function ShieldIcon({ size = 14, className = "" }: { size?: number; className?: string }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
-      <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-    </svg>
-  );
-}

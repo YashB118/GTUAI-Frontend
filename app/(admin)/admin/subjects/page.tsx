@@ -25,6 +25,7 @@ export default function SubjectsPage() {
   const [subjects, setSubjects] = useState<SubjectStats[]>([]);
   const [loading, setLoading] = useState(true);
   const [deleting, setDeleting] = useState<string | null>(null);
+  const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
   const [editing, setEditing] = useState<SubjectStats | null>(null);
   const [filterBranch, setFilterBranch] = useState("");
   const [filterSemester, setFilterSemester] = useState("");
@@ -66,9 +67,11 @@ export default function SubjectsPage() {
         code: code.trim() || null,
         branch: branch || null,
         semester: semester ? Number(semester) : null,
+        credits: credits ? Number(credits) : null,
       });
       setName(""); setCode(""); setBranch(""); setSemester(""); setCredits("");
       await load();
+      toast.success("Subject added!");
     } catch (err: unknown) {
       setFormError(err instanceof Error ? err.message : "Failed to create subject");
     } finally {
@@ -78,8 +81,14 @@ export default function SubjectsPage() {
 
   const handleDelete = async (id: string) => {
     setDeleting(id);
-    await api.delete(`/subjects/${id}`).catch(() => null);
-    setSubjects(prev => prev.filter(s => s.id !== id));
+    setConfirmDelete(null);
+    try {
+      await api.delete(`/subjects/${id}`);
+      setSubjects(prev => prev.filter(s => s.id !== id));
+      toast.success("Subject deleted.");
+    } catch (e: unknown) {
+      toast.error(e instanceof Error ? e.message : "Delete failed");
+    }
     setDeleting(null);
   };
 
@@ -263,7 +272,7 @@ export default function SubjectsPage() {
                   <Edit2 size={12} />
                 </button>
                 <button
-                  onClick={() => handleDelete(s.id)}
+                  onClick={() => setConfirmDelete(s.id)}
                   disabled={deleting === s.id}
                   className="p-1.5 text-text-muted hover:text-red-400 hover:bg-bg-elevated rounded-md transition-colors disabled:opacity-40"
                   title="Delete"
@@ -278,6 +287,27 @@ export default function SubjectsPage() {
 
       {editing && (
         <EditModal subject={editing} onClose={() => setEditing(null)} onSave={handleEditSave} />
+      )}
+
+      {confirmDelete && (
+        <div className="fixed inset-0 z-40 bg-black/70 flex items-center justify-center" onClick={() => setConfirmDelete(null)}>
+          <div className="bg-bg-card border border-border rounded-xl p-5 max-w-sm w-full mx-4" onClick={e => e.stopPropagation()}>
+            <h3 className="text-sm font-semibold text-text-primary mb-2">Delete subject?</h3>
+            <p className="text-xs text-text-secondary mb-4">
+              This deletes the subject and all linked papers, questions, and patterns. This cannot be undone.
+            </p>
+            <div className="flex justify-end gap-2">
+              <button onClick={() => setConfirmDelete(null)} className="text-xs text-text-muted px-3 py-1.5">Cancel</button>
+              <button
+                onClick={() => handleDelete(confirmDelete)}
+                disabled={!!deleting}
+                className="bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 text-red-400 rounded-lg px-3 py-1.5 text-xs font-medium transition-all disabled:opacity-50"
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

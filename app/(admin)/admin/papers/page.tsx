@@ -5,6 +5,7 @@ import { FileText, RefreshCw, Upload, ShieldCheck, RotateCcw, Trash2, X } from "
 import { Badge } from "@/components/ui/badge";
 import { LoadingSkeleton } from "@/components/shared/LoadingSkeleton";
 import { api } from "@/lib/api";
+import { toast } from "sonner";
 
 interface Paper {
   id: string;
@@ -75,7 +76,10 @@ export default function PapersPage() {
     try {
       await api.patch(`/admin/papers/${paper.id}/verify?verified=${!paper.verified}`);
       setPapers(prev => prev.map(p => p.id === paper.id ? { ...p, verified: !paper.verified } : p));
-    } catch {}
+      toast.success(paper.verified ? "Verification removed." : "Paper marked as verified.");
+    } catch (e: unknown) {
+      toast.error(e instanceof Error ? e.message : "Verify failed");
+    }
     setActionId(null);
   };
 
@@ -83,7 +87,10 @@ export default function PapersPage() {
     setActionId(id);
     try {
       await api.post(`/admin/papers/${id}/reprocess`, {});
-    } catch {}
+      toast.success("Reprocessing queued — questions will re-extract in background.");
+    } catch (e: unknown) {
+      toast.error(e instanceof Error ? e.message : "Reprocess failed");
+    }
     setActionId(null);
     await load();
   };
@@ -93,7 +100,10 @@ export default function PapersPage() {
     try {
       await api.delete(`/admin/papers/${id}`);
       setPapers(prev => prev.filter(p => p.id !== id));
-    } catch {}
+      toast.success("Paper deleted.");
+    } catch (e: unknown) {
+      toast.error(e instanceof Error ? e.message : "Delete failed");
+    }
     setActionId(null);
     setConfirmDelete(null);
   };
@@ -316,6 +326,7 @@ function UploadModal({
     fd.append("exam_type", examType);
     try {
       await api.upload("/admin/papers/upload", fd);
+      toast.success("Paper uploaded and queued for processing.");
       onUploaded();
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Upload failed");

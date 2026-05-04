@@ -37,7 +37,6 @@ export default function SettingsPage() {
   const [cacheSubject, setCacheSubject] = useState("");
   const [rescoreSubject, setRescoreSubject] = useState("");
   const [busy, setBusy] = useState<string | null>(null);
-  const [msg, setMsg] = useState<string | null>(null);
 
   const load = async () => {
     setLoading(true);
@@ -75,9 +74,9 @@ export default function SettingsPage() {
     try {
       const path = cacheSubject ? `/admin/predictions/clear-cache?subject_id=${cacheSubject}` : "/admin/predictions/clear-cache";
       const res = await api.post(path, {});
-      setMsg(`Cleared ${res?.cleared ?? 0} prediction cache entries.`);
+      toast.success(`Cleared ${res?.cleared ?? 0} prediction cache entries.`);
     } catch (e: unknown) {
-      setMsg(e instanceof Error ? e.message : "Failed");
+      toast.error(e instanceof Error ? e.message : "Clear cache failed");
     }
     setBusy(null);
   };
@@ -87,9 +86,9 @@ export default function SettingsPage() {
     setBusy("rescore");
     try {
       const res = await api.post(`/admin/predictions/rescore/${rescoreSubject}`, {});
-      setMsg(`Re-scored ${res?.updated ?? 0} patterns.`);
+      toast.success(`Re-scored ${res?.updated ?? 0} patterns.`);
     } catch (e: unknown) {
-      setMsg(e instanceof Error ? e.message : "Failed");
+      toast.error(e instanceof Error ? e.message : "Re-score failed");
     }
     setBusy(null);
   };
@@ -232,9 +231,6 @@ export default function SettingsPage() {
             </button>
           </div>
 
-          {msg && (
-            <p className="text-xs text-text-secondary bg-bg-elevated rounded-lg px-3 py-2">{msg}</p>
-          )}
         </div>
       </div>
     </div>
