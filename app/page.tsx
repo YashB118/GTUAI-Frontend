@@ -2,7 +2,7 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import {
-  Sparkles, BookOpen, MessageSquare, ArrowRight, Brain, TrendingUp, Users,
+  Sparkles, BookOpen, MessageSquare, ArrowRight, Brain, TrendingUp,
   FileText, Zap, BarChart3, GraduationCap, Mail, MapPin, Clock, Star,
   ChevronRight, PenLine,
 } from "lucide-react";

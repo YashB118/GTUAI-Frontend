@@ -39,7 +39,7 @@ export default function ContactForm() {
         </div>
         <div>
           <p className="text-lg font-semibold text-text-primary">Message sent!</p>
-          <p className="text-sm text-text-secondary mt-1">We'll get back to you within 24 hours.</p>
+          <p className="text-sm text-text-secondary mt-1">We&apos;ll get back to you within 24 hours.</p>
         </div>
       </div>
     );
