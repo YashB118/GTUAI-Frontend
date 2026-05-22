@@ -33,12 +33,11 @@ async function fetchWithAuth(path: string, options: RequestInit = {}) {
   return res.json();
 }
 
-// Brahmastra share links — disabled until Brahmastra is rebuilt
-// export async function getBrahmastraByShareId(shareId: string) {
-//   const res = await fetch(`${BASE_URL}/oracle/share/${shareId}`);
-//   if (!res.ok) throw new Error("Brief not found or expired");
-//   return res.json();
-// }
+export async function getBrahmastraByShareId(shareId: string) {
+  const res = await fetch(`${BASE_URL}/oracle/share/${shareId}`);
+  if (!res.ok) throw new Error("Brief not found or expired");
+  return res.json();
+}
 
 export const api = {
   get: (path: string) => fetchWithAuth(path),
